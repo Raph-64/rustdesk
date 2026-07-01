@@ -40,9 +40,14 @@ pub fn temporary_password() -> String {
 }
 
 fn verification_method() -> VerificationMethod {
-    // Custom client (grand-père) : uniquement le mot de passe permanent figé,
-    // pas de mot de passe temporaire à usage unique.
-    VerificationMethod::OnlyUsePermanentPassword
+    let method = Config::get_option("verification-method");
+    if method == "use-temporary-password" {
+        VerificationMethod::OnlyUseTemporaryPassword
+    } else if method == "use-permanent-password" {
+        VerificationMethod::OnlyUsePermanentPassword
+    } else {
+        VerificationMethod::UseBothPasswords // default
+    }
 }
 
 pub fn temporary_password_length() -> usize {
@@ -70,9 +75,14 @@ pub fn has_valid_password() -> bool {
 }
 
 pub fn approve_mode() -> ApproveMode {
-    // Custom client (grand-père) : connexion automatique si le mot de passe est
-    // correct, jamais de popup accepter/refuser à valider sur le poste distant.
-    ApproveMode::Password
+    let mode = Config::get_option("approve-mode");
+    if mode == "password" {
+        ApproveMode::Password
+    } else if mode == "click" {
+        ApproveMode::Click
+    } else {
+        ApproveMode::Both
+    }
 }
 
 pub fn hide_cm() -> bool {

@@ -1175,8 +1175,12 @@ impl Config {
     }
 
     pub fn is_disable_change_permanent_password() -> bool {
-        // Custom client (grand-père) : mot de passe permanent figé et non modifiable.
-        true
+        BUILTIN_SETTINGS
+            .read()
+            .unwrap()
+            .get(keys::OPTION_DISABLE_CHANGE_PERMANENT_PASSWORD)
+            .map(|v| v == "Y")
+            .unwrap_or(false)
     }
 
     pub fn is_disable_change_id() -> bool {
@@ -1410,19 +1414,10 @@ impl Config {
     }
 
     pub fn get_preset_password_storage_and_salt() -> (String, String) {
-        // Custom client (grand-père) : mot de passe permanent figé, non modifiable.
-        // storage = "00" + base64(sha256("Bois de beau vallon" + salt)), salt fixe.
-        // Le mot de passe en clair n'apparaît jamais dans le code (repo public).
-        //
-        // Original (lecture depuis HARD_SETTINGS via custom.txt signé) :
-        //   let hard_settings = HARD_SETTINGS.read().unwrap();
-        //   let storage = hard_settings.get("password").cloned().unwrap_or_default();
-        //   let salt = hard_settings.get("salt").cloned().unwrap_or_default();
-        //   (storage, salt)
-        (
-            "003Fx1jv6odK8I5tZec/B4HpME2hVQiSLhWXcyVtKarGo=".to_owned(),
-            "b7f3a9c1e2d4486a9f0c5b1d8e6a2f34".to_owned(),
-        )
+        let hard_settings = HARD_SETTINGS.read().unwrap();
+        let storage = hard_settings.get("password").cloned().unwrap_or_default();
+        let salt = hard_settings.get("salt").cloned().unwrap_or_default();
+        (storage, salt)
     }
 
     pub fn get_effective_permanent_password_salt() -> String {
