@@ -1,9 +1,8 @@
 name: Flutter Nightly Build
 
 on:
-  schedule:
-    # schedule build every night
-    - cron: "0 0 * * *"
+  # custom: build planifié retiré (évitait un échec + conso de minutes chaque nuit sur master).
+  # On lance manuellement via "Run workflow" sur les branches user-client / dev-client.
   workflow_dispatch:
 
 jobs:
