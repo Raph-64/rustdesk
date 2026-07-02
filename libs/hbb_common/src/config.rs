@@ -2779,11 +2779,9 @@ fn is_option_can_save(
 
 #[inline]
 pub fn is_incoming_only() -> bool {
-    HARD_SETTINGS
-        .read()
-        .unwrap()
-        .get("conn-type")
-        .map_or(false, |x| x == ("incoming"))
+    // Custom client (grand-père) : machine "récepteur" uniquement.
+    // Masque le panneau "Contrôler un bureau distant" (champ ID à saisir).
+    true
 }
 
 #[inline]
