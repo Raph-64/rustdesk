@@ -222,8 +222,9 @@ class _DesktopHomePageState extends State<DesktopHomePage>
                                   ?.color
                                   ?.withOpacity(0.5)),
                         ).marginOnly(top: 5),
-                        // Custom client (grand-père) : bouton Paramètres masqué.
-                        if (!bind.isDisableSettings()) buildPopupMenu(context)
+                        // Custom client (grand-père) : bouton Paramètres masqué,
+                        // révélé par le raccourci secret (settingsAreLocked).
+                        if (!settingsAreLocked()) buildPopupMenu(context)
                       ],
                     ),
                   ),
@@ -360,7 +361,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
                           ),
                           onHover: (value) => refreshHover.value = value,
                         ).marginOnly(right: 8, top: 4),
-                      if (!bind.isDisableSettings())
+                      if (!settingsAreLocked())
                         InkWell(
                           child: Tooltip(
                             message: translate('Change Password'),
@@ -698,6 +699,9 @@ class _DesktopHomePageState extends State<DesktopHomePage>
   @override
   void initState() {
     super.initState();
+    // Custom client : raccourci secret (Ctrl+Alt+Shift+U) pour révéler/masquer les
+    // paramètres cachés d'une machine "user" (utile au dev en contrôle à distance).
+    HardwareKeyboard.instance.addHandler(_secretUnlockHandler);
     _updateTimer = periodic_immediate(const Duration(seconds: 1), () async {
       await gFFI.serverModel.fetchID();
       final error = await bind.mainGetError();
@@ -877,11 +881,34 @@ class _DesktopHomePageState extends State<DesktopHomePage>
 
   @override
   void dispose() {
+    HardwareKeyboard.instance.removeHandler(_secretUnlockHandler);
     _uniLinksSubscription?.cancel();
     Get.delete<RxBool>(tag: 'stop-service');
     _updateTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  // Custom client : bascule le déverrouillage des paramètres cachés via un
+  // raccourci secret (Ctrl+Alt+Shift+U). Sans effet sur dev-client (paramètres
+  // déjà visibles). Fonctionne aussi quand le dev contrôle la machine à distance.
+  bool _secretUnlockHandler(KeyEvent event) {
+    if (event is KeyDownEvent &&
+        event.logicalKey == LogicalKeyboardKey.keyU) {
+      final pressed = HardwareKeyboard.instance.logicalKeysPressed;
+      final ctrl = pressed.contains(LogicalKeyboardKey.controlLeft) ||
+          pressed.contains(LogicalKeyboardKey.controlRight);
+      final alt = pressed.contains(LogicalKeyboardKey.altLeft) ||
+          pressed.contains(LogicalKeyboardKey.altRight);
+      final shift = pressed.contains(LogicalKeyboardKey.shiftLeft) ||
+          pressed.contains(LogicalKeyboardKey.shiftRight);
+      if (ctrl && alt && shift) {
+        gUnlockUserSettings.value = !gUnlockUserSettings.value;
+        setState(() {});
+        return true;
+      }
+    }
+    return false;
   }
 
   @override

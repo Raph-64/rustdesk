@@ -42,6 +42,14 @@ const Color _accentColor = MyTheme.accent;
 const String _kSettingPageControllerTag = 'settingPageController';
 const String _kSettingPageTabKeyTag = 'settingPageTabKey';
 
+// Custom client (grand-père) : déverrouillage temporaire des paramètres cachés,
+// déclenché par un raccourci secret (Ctrl+Alt+Shift+U) sur l'écran d'accueil.
+// Utile au dev quand il contrôle une machine "user" à distance.
+// Sur dev-client, is_disable_settings() = false, donc settingsAreLocked() = false : aucun effet.
+final RxBool gUnlockUserSettings = false.obs;
+bool settingsAreLocked() =>
+    bind.isDisableSettings() && !gUnlockUserSettings.value;
+
 class _TabInfo {
   late final SettingsTabKey key;
   late final String label;
@@ -63,17 +71,20 @@ enum SettingsTabKey {
 
 class DesktopSettingPage extends StatefulWidget {
   final SettingsTabKey initialTabkey;
-  static final List<SettingsTabKey> tabKeys = [
+  // Getter (et non `static final`) pour être recalculé après un déverrouillage
+  // par raccourci secret (voir settingsAreLocked / gUnlockUserSettings).
+  static List<SettingsTabKey> get tabKeys => [
     SettingsTabKey.general,
     if (!isWeb &&
         !bind.isOutgoingOnly() &&
-        !bind.isDisableSettings() &&
+        !settingsAreLocked() &&
         bind.mainGetBuildinOption(key: kOptionHideSecuritySetting) != 'Y')
       SettingsTabKey.safety,
-    if (!bind.isDisableSettings() &&
+    if (!settingsAreLocked() &&
         bind.mainGetBuildinOption(key: kOptionHideNetworkSetting) != 'Y')
       SettingsTabKey.network,
-    if (!bind.isIncomingOnly()) SettingsTabKey.display,
+    if (!bind.isIncomingOnly() || gUnlockUserSettings.value)
+      SettingsTabKey.display,
     if (!isWeb && !bind.isIncomingOnly() && bind.pluginFeatureIsEnabled())
       SettingsTabKey.plugin,
     if (!bind.isDisableAccount()) SettingsTabKey.account,
@@ -1621,8 +1632,8 @@ class _NetworkState extends State<_Network> with AutomaticKeepAliveClientMixin {
   }
 
   Widget network(BuildContext context) {
-    // Custom client (grand-père) : serveur/clé figés, masqués et non modifiables.
-    final hideServer = true;
+    // Custom client (grand-père) : serveur masqué, sauf déverrouillage secret (dev).
+    final hideServer = settingsAreLocked();
     final hideProxy =
         isWeb || bind.mainGetBuildinOption(key: kOptionHideProxySetting) == 'Y';
     final hideWebSocket = isWeb ||
