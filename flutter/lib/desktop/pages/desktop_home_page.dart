@@ -92,7 +92,10 @@ class _DesktopHomePageState extends State<DesktopHomePage>
       ),
       buildTip(context),
       if (!isOutgoingOnly) buildIDBoard(context),
-      if (!isOutgoingOnly) buildPasswordBoard(context),
+      // Custom client (grand-père) : pas de mot de passe à usage unique affiché
+      // (on utilise toujours le mot de passe permanent fixe).
+      if (!isOutgoingOnly && !bind.isDisableSettings())
+        buildPasswordBoard(context),
       FutureBuilder<Widget>(
         future: Future.value(
             Obx(() => buildHelpCards(stateGlobal.updateUrl.value))),
@@ -181,6 +184,18 @@ class _DesktopHomePageState extends State<DesktopHomePage>
   }
 
   buildRightPane(BuildContext context) {
+    // Custom client (grand-père) : machine "récepteur" — pas de champ pour se
+    // connecter à un autre PC. On garde la fenêtre entière avec juste le statut
+    // (place laissée pour d'éventuels ajouts futurs).
+    if (bind.isDisableSettings()) {
+      return Container(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        child: Align(
+          alignment: Alignment.topLeft,
+          child: OnlineStatusWidget().marginOnly(top: 16, left: 16),
+        ),
+      );
+    }
     return Container(
       color: Theme.of(context).scaffoldBackgroundColor,
       child: ConnectionPage(),

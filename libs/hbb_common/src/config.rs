@@ -2779,9 +2779,14 @@ fn is_option_can_save(
 
 #[inline]
 pub fn is_incoming_only() -> bool {
-    // Custom client (grand-père) : machine "récepteur" uniquement.
-    // Masque le panneau "Contrôler un bureau distant" (champ ID à saisir).
-    true
+    // Custom client (grand-père) : le masquage du panneau "Contrôler un bureau
+    // distant" est fait côté UI (buildRightPane) pour garder la fenêtre entière,
+    // pas via ce mode qui réduit la fenêtre. Comportement upstream conservé.
+    HARD_SETTINGS
+        .read()
+        .unwrap()
+        .get("conn-type")
+        .map_or(false, |x| x == ("incoming"))
 }
 
 #[inline]
