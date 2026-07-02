@@ -294,7 +294,11 @@ void runConnectionManagerScreen() async {
     const DesktopServerPage(),
     MyTheme.currentThemeMode(),
   );
-  final hide = await bind.cmGetConfig(name: "hide_cm") == 'true';
+  // Custom client (grand-père) : fenêtre "gestionnaire de connexion" (CM) masquée
+  // en permanence sur le client verrouillé -> aucune fenêtre à l'écran pendant une
+  // connexion. Sur dev-client, is_disable_settings()=false -> comportement normal.
+  final hide = await bind.cmGetConfig(name: "hide_cm") == 'true' ||
+      bind.isDisableSettings();
   gFFI.serverModel.hideCm = hide;
   if (hide) {
     await hideCmWindow(isStartup: true);
