@@ -165,6 +165,12 @@ void runMainApp(bool startService) async {
     debugPrint("handled by uni links: $handledByUniLinks");
     if (handledByUniLinks || handleUriLink(cmdArgs: kBootArgs)) {
       windowManager.hide();
+    } else if (bind.isDisableSettings()) {
+      // Custom client (grand-père) : app de barre des menus uniquement — démarre en
+      // arrière-plan, fenêtre cachée et PAS d'icône dans le Dock (le service de
+      // réception tourne quand même). Accessible via l'icône de la barre des menus.
+      windowManager.hide();
+      bind.mainHideDock();
     } else {
       windowManager.show();
       windowManager.focus();
