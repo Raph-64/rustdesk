@@ -2082,6 +2082,18 @@ pub fn rustdesk_interval(i: Interval) -> ThrottledInterval {
 }
 
 pub fn load_custom_client() {
+    // Custom client (Rapha Assist) : serveur + clé hardcodés dans DEFAULT_SETTINGS.
+    // Sans ça, l'option "custom-rendezvous-server" est vide -> l'app se croit sur le
+    // serveur public (using_public_server()=true, logique de relais faussée) et l'UI
+    // affiche "non configuré", même si la connexion retombe sur la constante.
+    // Ici tout devient cohérent : connexion, détection, et affichage dans les réglages.
+    {
+        let mut ds = config::DEFAULT_SETTINGS.write().unwrap();
+        ds.entry("custom-rendezvous-server".to_owned())
+            .or_insert_with(|| "92.88.15.36".to_owned());
+        ds.entry("key".to_owned())
+            .or_insert_with(|| config::RS_PUB_KEY.to_owned());
+    }
     #[cfg(debug_assertions)]
     if let Ok(data) = std::fs::read_to_string("./custom.txt") {
         read_custom_client(data.trim());
